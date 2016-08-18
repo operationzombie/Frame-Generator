@@ -1,0 +1,77 @@
+C program to convert passed in char array of data into ascii hex, then
+get the address of a node and send the frame to it. Frame definitions are listed below. 
+A frame is made up in the following structure:
+
+[7E] = Start delimiter >> Indicates to an xbee a frame is being recieved
+[00][00] = Length >> MSB always==00. LSB denotes the number of bytes between the LSB of length
+                    and the Checksum
+[10] = Frame Type >> Always at 10 for now (transmit request). Once this is working correctly may also use   
+                     08 (AT Command for local node) or 17 (AT Command for Remote Node). These will require
+                     different fram types so will leave until MVP is complete
+[00] = Frame ID >> Whether a response is requested. 01 means the xbee will send itself a status packet after
+                    it tries to send the packet. 00 means it will not.
+[00][00][00][00][00][00][00][00] = 64bit dest address >> All 0s is the coordinator address. FF FF at the end is a 
+                                    broadcast address (send to all in network). Specific router nodes must be 
+                                    addressed with 0013A200 + their unique address
+[FF][FF] = 16 bit address. Easiest to leav on [FF][FF] as will go to all applicable nodes even if they are asleep.
+[00] = Broadcast Radius >> Max number of hops. 00s means max hops value. 
+[00] = Options >> 00 = No Options which is what we will use. 01 is Disable Ack, 20 is Enable APS Encryption
+                       and 40 is extended timeout.
+[00]...[00] = RF Data >> This is the actual data that is sent to the device. MAX 65521 bytes.
+[00] = Checksum >> FF - (8 bit sum of bytes between length and checksum fields).
+
+Currently data is ideally going to be made up of OP codes. The proposed ones are below:
+
+char value = hex value = info
+
+Motor Mode:
+00 = 0x00 0x30 =  FULL SWING
+01 = 0x00 0x31 =  HALF SWING
+02 = 0x00 0x32 =  STEPPER
+03 = 0x00 0x33 =  SERVER
+
+PWM:
+11 = 0x31 0x31 = 1 PWM
+12 = 0x31 0x32 = 2 PWM
+13 = 0x31 0x33 = 3 PWM
+14 = 0x31 0x34  = 4 PWM
+
+Dir:
+20 = 0x32 0x30 = BACK
+21 = 0x32 0x31 = FORWARD
+
+NUM (For the Stepper):
+3x..^ = 0x33 0xxx...0x5E = Steps  
+
+RATE:
+41 = 0x34 0x31 = 1
+42 = 0x34 0x32 = 2
+43 = 0x34 0x33 = 3
+44 = 0x34 0x34 = 4
+
+All the codes are 2xBytes each. The first Byte is a delimeter describing what type of Operation,
+and the 2nd Byte is the option, with the exception of Number of Steps which has as many bytes as needed with a
+stopping delimiter ^. All instruction must be in chars, a integer to char converter is supplied along with
+a char to ascii HEX converter for packaging data.
+
+A final frame example:
+Transmitting to router node with address 40E70F99 (Made up) to change to half swing 2pwm backwards:
+
+{0x7E, 0x00, 0x14, 0x10, 0x00, 0x00, 0x13, 0xA2, 0x00, 0x40, 0xE7, 0x0F, 0x99, 0xFF, 0xFF, 0x00, 0x00, 0x30, 0x31, 0x31, 0x32, 0x32, 0x30, 0x47}
+
+
+//definitions
+
+//globals
+
+//main for testing
+
+//char to ascii hex
+
+//int to ascii char
+
+//get address
+
+//make frame
+
+//send frame
